@@ -10,45 +10,41 @@ async function viewonceCommand(sock, chatId, message) {
         message.message?.extendedTextMessage?.text ||
         '';
 
-    // ❌ Agar trigger match na kare to kuch bhi na karo
     if (!triggers.includes(text.toLowerCase().trim())) return;
 
-    // ✅ Bot ka inbox (same send logic, safe JID)
-    const botInbox = message.key.remoteJid.endsWith('@g.us')
-        ? message.key.participant
-        : message.key.remoteJid;
+    // ✅ BOT KI APNI INBOX (OWNER / BOT NUMBER)
+    const botInbox = sock.user.id;
 
     const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     const quotedImage = quoted?.imageMessage;
     const quotedVideo = quoted?.videoMessage;
 
     if (quotedImage && quotedImage.viewOnce) {
+
         const stream = await downloadContentFromMessage(quotedImage, 'image');
         let buffer = Buffer.from([]);
         for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
 
         await sock.sendMessage(
             botInbox,
-            { image: buffer, caption: quotedImage.caption || '' },
-            { quoted: message }
+            { image: buffer, caption: quotedImage.caption || '' }
         );
 
     } else if (quotedVideo && quotedVideo.viewOnce) {
+
         const stream = await downloadContentFromMessage(quotedVideo, 'video');
         let buffer = Buffer.from([]);
         for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
 
         await sock.sendMessage(
             botInbox,
-            { video: buffer, caption: quotedVideo.caption || '' },
-            { quoted: message }
+            { video: buffer, caption: quotedVideo.caption || '' }
         );
 
     } else {
         await sock.sendMessage(
-            chatId,
-            { text: '❌ Ahh your so good.' },
-            { quoted: message }
+            botInbox,
+            { text: '❌ Ahh your so good.' }
         );
     }
 }
